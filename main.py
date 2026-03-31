@@ -1,5 +1,3 @@
-from webbrowser import Error
-
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -579,6 +577,7 @@ def train(args, exp_id, val_best):
                         loss['2'] = torch.tensor(0)
 
                     if 'i' in args.mode:
+                        # ranks = ranker(scores_all)[unique_u]
                         ranks = ranker(scores[unique_u], scores_all[unique_u])
 
                         # print("ranks:", ranks.shape, ranks)
