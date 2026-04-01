@@ -1,5 +1,5 @@
 setting:
-  data: ml1m # Dataset
+  data: ml-1m # Dataset
   gpu_id: 0 # GPU_ID
   baseline: NGCF # Base model
   wrapper: multifr # Multi-Objective Method
