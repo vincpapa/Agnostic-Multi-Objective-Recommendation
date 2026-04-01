@@ -744,10 +744,43 @@ def train(args, exp_id, val_best):
                             os.makedirs(f'arrays/')
                         if not os.path.exists(f'arrays/{args.data}/'):
                             os.makedirs(f'arrays/{args.data}/')
-                        #  np.savez_compressed(f'arrays/{args.data}/{exp_id}.npz', model.predict(torch.tensor(users).to(device)).cpu().detach().numpy(), fmt='%f')
-                        np.savez_compressed(f'arrays/{args.data}/{args.backbone}_{args.mo_method}_{args.data}.npz',
-                                            model.predict(torch.tensor(users).to(device)).cpu().detach().numpy(),
-                                            fmt='%f')
+                        # ===== Embedding =====
+                        if args.backbone == 'BPRMF':
+                            user_emb = model.myparameters[0].detach().cpu().numpy()
+                            item_emb = model.myparameters[1].detach().cpu().numpy()
+
+                        elif args.backbone == 'LightGCN':
+                            gu, gi = model.propagate_embeddings(evaluate=True)
+                            user_emb = gu.detach().cpu().numpy()
+                            item_emb = gi.detach().cpu().numpy()
+
+                        elif args.backbone == 'NGCF':
+                            gu, gi = model.propagate_embeddings(evaluate=True)
+                            user_emb = gu.detach().cpu().numpy()
+                            item_emb = gi.detach().cpu().numpy()
+
+                        else:
+                            raise ValueError(f"Backbone not supported: {args.backbone}")
+                        # ===== Score matrix user-item =====
+                        score_matrix = model.predict(torch.tensor(users).to(device)).detach().cpu().numpy()
+
+                        rows, cols = train_matrix.nonzero()
+                        score_matrix[rows, cols] = -1e9
+
+                        # ===== Saving =====
+                        np.savez_compressed(
+                            f'arrays/{args.data}/{args.backbone}_{args.mo_method}_{exp_id}.npz',
+                            user_emb=user_emb,
+                            item_emb=item_emb,
+                            score_matrix=score_matrix,
+                            user_map=np.array(dataset['user_mapping_inv'], dtype=object),
+                            item_map=np.array(dataset['item_mapping_inv'], dtype=object),
+                            metric_name=np.array([args.metric], dtype=object)
+                        )
+
+                        #np.savez_compressed(f'arrays/{args.data}/{args.backbone}_{args.mo_method}_{args.data}.npz',
+                        #                    model.predict(torch.tensor(users).to(device)).cpu().detach().numpy(),
+                        #                    fmt='%f')
                 # precision, recall, MAP, ndcg = compute_metrics(val_user_list, pred_list, topk=20)
                 print(f'Validation metric: {args.metric}, Value: {val_metric}')
                 validation_scores.append((iter + 1, val_metric))
