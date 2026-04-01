@@ -8,7 +8,7 @@ setting:
   validation_metric: ndcg@20 # Metric of evaluation during training
   batch_size: 1024 # Batch size
 hyperparameters:
-  dim: [64] # Dimension for embedding
+  dim: [64] # Dimension for embedding dcd
   lr: [0.005, 0.001, 0.0005] # Learning rate
   l_2: [0.01, 0.005, 0.001] #L2 penalty
   mode: [r] # Which loss to use
