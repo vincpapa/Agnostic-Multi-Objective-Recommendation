@@ -6,7 +6,7 @@ setting:
   epochs: 500 # Number of epochs
   validation_rate: 10 # Period of evaluation during training
   validation_metric: ndcg@20 # Metric of evaluation during training
-  batch_size: 2048 # Batch size
+  batch_size: 1800 # Batch size
 hyperparameters:
   dim: [64] # Dimension for embedding
   lr: [0.005, 0.001, 0.0005] # Learning rate
