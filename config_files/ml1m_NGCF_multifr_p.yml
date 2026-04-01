@@ -3,15 +3,15 @@ setting:
   gpu_id: 1 # GPU_ID
   baseline: NGCF # Base model
   wrapper: multifr # Multi-Objective Method
-  epochs: 300 # Number of epochs
+  epochs: 400 # Number of epochs
   validation_rate: 10 # Period of evaluation during training
   validation_metric: ndcg@20 # Metric of evaluation during training
   batch_size: 2048 # Batch size
 hyperparameters:
   dim: [64] # Dimension for embedding
-  lr: [0.001] # Learning rate # 0.0005 # 0.005
+  lr: [0.005, 0.001, 0.0005] # Learning rate
   l_2: [0.01, 0.005, 0.001] #L2 penalty
-  gamma: [0.75] # Patience factor (MultiFR) # 0.5
+  gamma: [0.5, 0.75] # Patience factor (MultiFR)
   temp: [0.00001] # How soft ranks to be (MultiFR)
   mode: [ri] # Which loss to use
   g_n: [loss+] # Modality of gradient normalization
