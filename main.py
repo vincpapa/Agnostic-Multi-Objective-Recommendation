@@ -924,7 +924,8 @@ if __name__ == '__main__':
     train_user_list, val_user_list, test_user_list = dataset['train_user_list'], dataset['val_user_list'], dataset[
         'test_user_list']
     train_val_user_list = [i + j for i, j in zip(train_user_list, val_user_list)]
-
+    np.save(f'arrays/{settings["data"]}/long_tail.npy', np.array(long_tail, dtype=np.int64))
+    np.save(f'arrays/{settings["data"]}/train_user_list.npy', np.array(train_user_list, dtype=object))
     all_list = [i + j + k for i, j, k in zip(train_user_list, val_user_list, test_user_list)]
     train_val_list = [i + j for i, j in zip(train_user_list, val_user_list)]
 
@@ -968,7 +969,8 @@ if __name__ == '__main__':
     val_best = 0
     if config.end is None:
         config.end = len(experiments) + 1
-    for i, experiment in reversed(list(enumerate(experiments, start=1))):
+    # for i, experiment in reversed(list(enumerate(experiments, start=1))):
+    for i, experiment in enumerate(experiments, start=1):
         if config.start <= i <= config.end:
             print(f"Experiment {i}/{len(experiments)}")
             # eventid = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S%f")[:-6]
