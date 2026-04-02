@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-datasets = ['amazon_boys_girls']
+datasets = ['amazon_book']
 
 for dataset in datasets:
     train = pd.read_csv(f'data/{dataset}/train.tsv', sep='\t', header=None)

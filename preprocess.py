@@ -210,6 +210,35 @@ class AmazonMusic(DatasetLoader):
         return df, train, test, val
 
 
+class AmazonBook(DatasetLoader):
+    def __init__(self, data_dir):
+
+        self.fpath_train = os.path.join(data_dir, 'train.tsv')
+        self.fpath_test = os.path.join(data_dir, 'test.tsv')
+        self.fpath_val = os.path.join(data_dir, 'validation.tsv')
+        self.fpath_user_act = os.path.join(data_dir, 'user_groups.tsv')
+
+    def load(self):
+        # Load data
+        train = pd.read_csv(self.fpath_train,
+                            sep='\t',
+                            names=['user', 'item', 'rate', 'timestamp'])
+        test = pd.read_csv(self.fpath_test,
+                            sep='\t',
+                            names=['user', 'item', 'rate', 'timestamp'])
+        val = pd.read_csv(self.fpath_val,
+                            sep='\t',
+                            names=['user', 'item', 'rate', 'timestamp'])
+        df = pd.concat([train[['user', 'item', 'rate']], val[['user', 'item', 'rate']], test[['user', 'item', 'rate']]], ignore_index=True)
+        act_user = pd.read_csv(self.fpath_user_act,
+                               sep='\t',
+                               names=['user', 'activity_level'])
+
+        df = pd.merge(df, act_user, on='user')
+
+        return df, train, test, val
+
+
 class FacebookBooks(DatasetLoader):
     def __init__(self, data_dir):
 
@@ -532,6 +561,8 @@ def preprocessing(settings):
         df, train, test, val = AmazonBaby(data_dir).load()
     elif settings['data'] == 'amazon_music':
         df, train, test, val = AmazonMusic(data_dir).load()
+    elif settings['data'] == 'amazon_book':
+        df, train, test, val = AmazonBook(data_dir).load()
     else:
         raise NotImplementedError
 
@@ -553,7 +584,7 @@ def preprocessing(settings):
     print("item_size:", item_size)
 
 
-    if settings['data'] in ['ml-100k', 'ml-1m', 'lastfm', 'facebook_books', 'amazon_baby', 'amazon_music', 'amazon_boys_girls']:
+    if settings['data'] in ['ml-100k', 'ml-1m', 'lastfm', 'facebook_books', 'amazon_baby', 'amazon_music', 'amazon_boys_girls', 'amazon_book']:
         train_matrix, test_matrix, val_matrix, train_user_list, test_user_list, val_user_list\
             = sparse_matrix(train, test, val, user_size, item_size)
     # else:
