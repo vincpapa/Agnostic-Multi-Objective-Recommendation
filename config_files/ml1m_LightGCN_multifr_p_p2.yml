@@ -1,6 +1,6 @@
 setting:
   data: ml-1m # Dataset
-  gpu_id: 0 # GPU_ID
+  gpu_id: 3 # GPU_ID
   baseline: LightGCN # Base model
   wrapper: multifr # Multi-Objective Method
   epochs: 400 # Number of epochs
