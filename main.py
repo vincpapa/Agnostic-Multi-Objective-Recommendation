@@ -473,11 +473,19 @@ def train(args, exp_id, val_best):
                 # AMORe Method
                 if args.mo_method in ['AMORE_MGDA', 'AMORE_EPO', 'AMORE_SCALE', 'AMORE_ABL', 'AMORE_ABL_WOS', 'AMORE_ABL_WOZ']:
                     if args.backbone == 'BPRMF':
-                        scores_all = model.myparameters[0].mm(model.myparameters[1].t())
+                        # scores_all = model.myparameters[0].mm(model.myparameters[1].t())
+                        batch_users = unique_u.to(args.device)
+                        user_emb = model.myparameters[0][batch_users]  # [B, d]
+                        item_emb = model.myparameters[1]  # [I, d]
+                        scores_all = user_emb @ item_emb.t()  # [B, I]
                     elif args.backbone == 'LightGCN':
-                        scores_all = model.predict(users)
+                        # scores_all = model.predict(users)
+                        batch_users = unique_u.to(args.device)
+                        scores_all = model.predict(batch_users)
                     elif args.backbone == 'NGCF':
-                        scores_all = model.predict(users)
+                        # scores_all = model.predict(users)
+                        batch_users = unique_u.to(args.device)
+                        scores_all = model.predict(batch_users)
                     ranks_prov = ranker(scores_all)
                     if 'm' in args.mode:
                         ndcg = compute_differentiable_ndcg(unique_u, args, ranks_prov, sampled_ids, labels)
