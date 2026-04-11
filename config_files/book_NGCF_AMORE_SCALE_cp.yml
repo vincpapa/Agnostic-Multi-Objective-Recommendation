@@ -12,7 +12,7 @@ hyperparameters:
   lr: [0.005, 0.001, 0.0005] # Learning rate
   l_2: [0.01, 0.005, 0.001] #L2 penalty
   mode: [rpm] # Which loss to use
-  atk: [20] # Cutoff in metrics approximation
+  atk: [{atk_cons: 20, atk_prov: 20}] # Cutoff in metrics approximation
   ranker: [AIMLE] # Which Ranking Approx. to use
   layers: [3]
   message_dropout: [0.1]
