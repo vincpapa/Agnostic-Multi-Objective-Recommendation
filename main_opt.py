@@ -86,47 +86,44 @@ def parse_args():
     return parser.parse_args()
 
 
-def generate_pred_list(model, train_matrix, topk=20):
+def generate_pred_list(model, train_matrix, topk=20, batch_size=1024, return_raw=False):
+    model.eval()
     num_users = train_matrix.shape[0]
-    batch_size = 1024
-    num_batches = int(num_users / batch_size) + 1
     user_indexes = np.arange(num_users)
-    pred_list = None
 
-    for batchID in range(num_batches):
-        start = batchID * batch_size
-        end = start + batch_size
+    pred_chunks = []
+    score_chunks = []
+    raw_chunks = [] if return_raw else None
 
-        if batchID == num_batches - 1:
-            if start < num_users:
-                end = num_users
-            else:
-                break
+    with torch.no_grad():
+        for start in range(0, num_users, batch_size):
+            end = min(start + batch_size, num_users)
+            batch_user_index = user_indexes[start:end]
 
-        batch_user_index = user_indexes[start:end]
-        batch_user_ids = torch.from_numpy(np.array(batch_user_index)).type(torch.LongTensor).to(device)
+            batch_user_ids = torch.as_tensor(
+                batch_user_index, dtype=torch.long, device=device
+            )
 
-        rating_pred = model.predict(batch_user_ids)
-        rating_pred = rating_pred.cpu().data.numpy().copy()
-        rating_pred[train_matrix[batch_user_index].toarray() > 0] = 0
-        batch_raw_score = rating_pred
+            rating_pred = model.predict(batch_user_ids)
 
-        # reference: https://stackoverflow.com/a/23734295, https://stackoverflow.com/a/20104162
-        ind = np.argpartition(rating_pred, -topk)
-        ind = ind[:, -topk:]
-        arr_ind = rating_pred[np.arange(len(rating_pred))[:, None], ind]
-        arr_ind_argsort = np.argsort(arr_ind)[np.arange(len(rating_pred)), ::-1]
-        batch_pred_list = ind[np.arange(len(rating_pred))[:, None], arr_ind_argsort]
-        batch_score_list = rating_pred[np.arange(len(rating_pred))[:, None], batch_pred_list]
+            seen_mask = torch.as_tensor(
+                train_matrix[batch_user_index].toarray(),
+                dtype=torch.bool,
+                device=rating_pred.device
+            )
+            rating_pred = rating_pred.masked_fill(seen_mask, float('-inf'))
 
-        if batchID == 0:
-            pred_list = batch_pred_list
-            score_list = batch_score_list
-            raw_score_list = batch_raw_score
-        else:
-            pred_list = np.append(pred_list, batch_pred_list, axis=0)
-            score_list = np.append(score_list, batch_score_list, axis=0)
-            raw_score_list = np.append(raw_score_list, batch_raw_score, axis=0)
+            if return_raw:
+                raw_chunks.append(rating_pred.detach().cpu().numpy())
+
+            batch_scores, batch_items = torch.topk(rating_pred, k=topk, dim=1)
+
+            pred_chunks.append(batch_items.cpu().numpy())
+            score_chunks.append(batch_scores.cpu().numpy())
+
+    pred_list = np.concatenate(pred_chunks, axis=0)
+    score_list = np.concatenate(score_chunks, axis=0)
+    raw_score_list = np.concatenate(raw_chunks, axis=0) if return_raw else None
 
     return pred_list, score_list, raw_score_list
 
@@ -462,7 +459,8 @@ def train(args, exp_id, val_best):
                 # print("Batch: ", batch_id)
                 user, pos, neg = sampler.next_batch()
                 neg = np.squeeze(neg)
-                unique_u = torch.LongTensor(list(set(user.tolist())))
+                # unique_u = torch.LongTensor(list(set(user.tolist())))
+                unique_u = torch.as_tensor(np.unique(user), dtype=torch.long, device=args.device)
 
                 user_id = torch.from_numpy(user).type(torch.LongTensor).to(args.device)
                 pos_id = torch.from_numpy(pos).type(torch.LongTensor).to(args.device)
@@ -764,7 +762,7 @@ def train(args, exp_id, val_best):
                 model.eval()
                 # Generate list of recommendation
                 print('***** Generate list of recommendation *****')
-                pred_list, score_matrix, raw_score_matrix = generate_pred_list(model, train_matrix, topk=50)
+                pred_list, _, _ = generate_pred_list(model, train_matrix, topk=50, return_raw=False)
                 # Save list of recommendation for later use
                 print('***** Saving list of recommendation *****')
                 rec_to_elliot(iter + 1, pred_list, dataset, exp_id , args.data)
