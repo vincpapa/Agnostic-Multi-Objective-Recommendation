@@ -282,18 +282,22 @@ def normalize_loss_wo_zeta(data):
     # print(norm_utopia_point)
     return data  # , (norm_utopia_point-z_scores)
 
-def compute_differentiable_ndcg(users, args, ranks_prov, sampled_ids, labels):
-    idcg = sum([1.0 / math.log(i + 2, 2) for i in range(args.atk_con)])
-    dcg_num = ((torch.tanh(
-        -ranks_prov[users].gather(1, sampled_ids[users]) + args.atk_con) + 1) / 2) * labels[
-                  users]
-    dcg = torch.sum(dcg_num / torch.log2(ranks_prov[users].gather(1, sampled_ids[users]) + 1),
-                    dim=-1)
+def compute_differentiable_ndcg(args, ranks_prov, sampled_ids_batch, labels_batch):
+    """
+    ranks_prov: [B, num_items] dove B = len(unique_u)
+    sampled_ids_batch: [B, max_pos]
+    labels_batch: [B, max_pos]
+    """
+    idcg = sum(1.0 / math.log(i + 2, 2) for i in range(args.atk_con))
+
+    gathered_ranks = ranks_prov.gather(1, sampled_ids_batch)
+    dcg_num = ((torch.tanh(-gathered_ranks + args.atk_con) + 1) / 2) * labels_batch.float()
+    dcg = torch.sum(dcg_num / torch.log2(gathered_ranks + 1), dim=-1)
+
     return dcg / idcg
 
-def compute_differentiable_aplt(users, ranks, args, long_tail):
-    ranks = ranks[users]
-    ranks = (torch.tanh(-ranks + args.atk_pro) + 1) / 2
+def compute_differentiable_aplt(ranks_prov, args, long_tail):
+    ranks = (torch.tanh(-ranks_prov + args.atk_pro) + 1) / 2
     return torch.sum(ranks[:, long_tail], dim=1) / args.atk_pro
 
 
@@ -410,10 +414,10 @@ def train(args, exp_id, val_best):
                                                                          n_samp=max_pos - len(
                                                                              pos_ids_for_tail_list[i])))
 
-    sampled_ids = np.ones((user_size, max_pos)) * item_size
-    sampled_tail_ids = np.ones((user_size, max_pos)) * item_size
-    labels = np.zeros((user_size, max_pos))
-    labels_tail = np.zeros((user_size, max_pos))
+    sampled_ids = np.zeros((user_size, max_pos), dtype=np.int64)
+    sampled_tail_ids = np.zeros((user_size, max_pos), dtype=np.int64)
+    labels = np.zeros((user_size, max_pos), dtype=np.float32)
+    labels_tail = np.zeros((user_size, max_pos), dtype=np.float32)
 
     for i in range(user_size):
         sampled_ids[i][:len(pos_ids_list[i])] = np.array(pos_ids_list[i])
@@ -473,22 +477,44 @@ def train(args, exp_id, val_best):
                 # AMORe Method
                 if args.mo_method in ['AMORE_MGDA', 'AMORE_EPO', 'AMORE_SCALE', 'AMORE_ABL', 'AMORE_ABL_WOS', 'AMORE_ABL_WOZ']:
                     if args.backbone == 'BPRMF':
-                        scores_all = model.myparameters[0].mm(model.myparameters[1].t())
-                        # batch_users = unique_u.to(args.device)
-                        # user_emb = model.myparameters[0][batch_users]  # [B, d]
-                        # item_emb = model.myparameters[1]  # [I, d]
-                        # scores_all = user_emb @ item_emb.t()  # [B, I]
+                        # scores_all = model.myparameters[0].mm(model.myparameters[1].t())
+                        batch_users = unique_u.to(args.device)
+                        user_emb = model.myparameters[0][batch_users]  # [B, d]
+                        item_emb = model.myparameters[1]  # [I, d]
+                        scores_all = user_emb @ item_emb.t()  # [B, I]
                     elif args.backbone == 'LightGCN':
-                        scores_all = model.predict(users)
-                        # batch_users = unique_u.to(args.device)
-                        # scores_all = model.predict(batch_users)
+                        # scores_all = model.predict(users)
+                        batch_users = unique_u.to(args.device)
+                        scores_all = model.predict(batch_users)
                     elif args.backbone == 'NGCF':
-                        scores_all = model.predict(users)
-                        # batch_users = unique_u.to(args.device)
-                        # scores_all = model.predict(batch_users)
+                        # scores_all = model.predict(users)
+                        batch_users = unique_u.to(args.device)
+                        scores_all = model.predict(batch_users)
+                    else:
+                        raise ValueError("Backbone not supported.")
+
                     ranks_prov = ranker(scores_all)
+
+                    sampled_ids_batch = sampled_ids[unique_u]
+                    labels_batch = labels[unique_u]
+
+                    assert ranks_prov.dim() == 2
+                    assert sampled_ids_batch.dim() == 2
+                    assert labels_batch.dim() == 2
+
+                    assert sampled_ids_batch.min().item() >= 0
+                    assert sampled_ids_batch.max().item() < ranks_prov.size(1), (
+                        f"sampled_ids_batch max={sampled_ids_batch.max().item()}, "
+                        f"num_items={ranks_prov.size(1)}"
+                    )
+
+                    assert ranks_prov.size(0) == sampled_ids_batch.size(0) == labels_batch.size(0), (
+                        f"Mismatch batch dims: ranks={ranks_prov.size()}, "
+                        f"sampled={sampled_ids_batch.size()}, labels={labels_batch.size()}"
+                    )
+
                     if 'm' in args.mode:
-                        ndcg = compute_differentiable_ndcg(unique_u, args, ranks_prov, sampled_ids, labels)
+                        ndcg = compute_differentiable_ndcg(args, ranks_prov, sampled_ids_batch, labels_batch)
 
                         if args.mo_method in ['AMORE_MGDA', 'AMORE_EPO', 'AMORE_SCALE']:
                             loss['2'] = normalize_loss(torch.square(1 - ndcg)).sum()
@@ -499,7 +525,7 @@ def train(args, exp_id, val_best):
                         else:
                             loss['2'] = torch.square(1 - ndcg).sum()
                     else:
-                        loss['2'] = torch.tensor(0)
+                        loss['2'] = torch.tensor(0.0, device=args.device)
                     if 'p' in args.mode:
                         if rank_mode == 'base':
                             scores_tail = scores_all[:, long_tail]  # .to('cpu')
@@ -520,7 +546,7 @@ def train(args, exp_id, val_best):
                             # acc = acc + ranks_prov/len(unique_u)
                             del ranks_prov
                         else:
-                            aplt = compute_differentiable_aplt(unique_u, ranks_prov, args, long_tail)
+                            aplt = compute_differentiable_aplt(ranks_prov, args, long_tail)
 
 
                             if args.mo_method in ['ADAAMORE','AMORE_MGDA', 'AMORE_EPO', 'AMORE_SCALE']:
@@ -548,7 +574,7 @@ def train(args, exp_id, val_best):
 
                 # MultiFR Method
                 elif args.mo_method == 'multifr':
-                    if 'u' or 'i' in args.mode:
+                    if 'u' in args.mode or 'i' in args.mode:
                         if args.backbone == 'BPRMF':
                             scores_all = model.myparameters[0].mm(model.myparameters[1].t())
                         elif args.backbone == 'LightGCN':
@@ -956,7 +982,7 @@ if __name__ == '__main__':
         if len(train_val_user_list[i]) > max_length:
             max_length = len(train_val_user_list[i])
     print("max_train_val_length:", max_length)
-    if settings['data'] == 'ml-1m' or 'ml-100k':
+    if settings['data'] in ['ml-1m', 'ml-100k']:
         max_pos = max_length if max_length < 200 else 200
     elif settings['data'] in ['facebook_books', 'amazon_baby', 'amazon_boys_girls', 'amazon_music']:
         max_pos = max_length if max_length < 200 else 200
