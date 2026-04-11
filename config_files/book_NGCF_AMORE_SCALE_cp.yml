@@ -1,6 +1,6 @@
 setting:
   data: amazon_book # Dataset
-  gpu_id: 0 # GPU_ID
+  gpu_id: 4 # GPU_ID
   baseline: NGCF # Base model
   wrapper: AMORE_SCALE # Multi-Objective Method
   epochs: 500 # Number of epochs
