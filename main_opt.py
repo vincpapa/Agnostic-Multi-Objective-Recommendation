@@ -787,7 +787,16 @@ def train(args, exp_id, val_best):
                             item_emb = gi.detach().cpu().numpy()
 
                         elif args.backbone == 'NGCF':
-                            gu, gi = model.propagate_embeddings(evaluate=True)
+                            if model.node_dropout > 0:
+                                sampled_adj = model.sparse_dropout(model.adj,
+                                                                  model.node_dropout,
+                                                                  model.adj.nnz())
+
+                            if model.node_dropout > 0:
+                                adj = sampled_adj
+                            else:
+                                adj = model.adj
+                            gu, gi = model.propagate_embeddings(adj)
                             user_emb = gu.detach().cpu().numpy()
                             item_emb = gi.detach().cpu().numpy()
 
