@@ -167,9 +167,9 @@ class Ada2FairModel(nn.Module):
         )
 
         provider_item_count = torch.bincount(
-            self.provider_ids,
+            self.provider_ids.cpu(),
             minlength=self.num_providers
-        ).float().to(self.device)
+        ).to(self.device)
 
         # same spirit as Ada2Fair trainer: normalize by provider item count
         provider_avg_exposure = provider_exposure / torch.clamp(provider_item_count, min=1.0)
