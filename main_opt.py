@@ -31,6 +31,19 @@ from imle.target import AdaptiveTargetDistribution, TargetDistribution
 from torch.nn import Sigmoid
 from epo_lp import EPO_LP
 from early_stopping import EarlyStopping
+from scipy.stats import spearmanr
+
+def spearman_corr(x, y):
+    return float(spearmanr(x, y).correlation)
+
+def pearson_corr(x, y, eps=1e-8):
+    x = np.array(x)
+    y = np.array(y)
+
+    x = x - x.mean()
+    y = y - y.mean()
+
+    return float((x * y).mean() / (x.std() * y.std() + eps))
 
 
 def rank(seq: Tensor) -> Tensor:
@@ -82,6 +95,7 @@ def parse_args():
     parser.add_argument('--config', type=str)
     parser.add_argument('--start', type=int, default=1)
     parser.add_argument('--end', type=int, default=None)
+    parser.add_argument('--track_surrogates', type=bool, default=False)
 
     return parser.parse_args()
 
@@ -279,6 +293,29 @@ def normalize_loss_wo_zeta(data):
     # print(norm_utopia_point)
     return data  # , (norm_utopia_point-z_scores)
 
+def compute_true_ranks(scores: torch.Tensor) -> torch.Tensor:
+    return (torch.argsort(torch.argsort(scores, dim=1, descending=True), dim=1) + 1).float()
+
+def compute_true_ndcg(args, true_ranks, sampled_ids_batch, labels_batch):
+    k = args.atk_con
+    idcg = sum(1.0 / math.log(i + 2, 2) for i in range(k))
+
+    gathered_ranks = true_ranks.gather(1, sampled_ids_batch).float()
+    rel = labels_batch.float()
+
+    topk_mask = (gathered_ranks <= k).float()
+    dcg = torch.sum(topk_mask * rel / torch.log2(gathered_ranks + 1), dim=-1)
+
+    return dcg / idcg
+
+def compute_true_aplt(scores_all, atk_pro, long_tail):
+    topk_items = torch.topk(scores_all, k=atk_pro, dim=1).indices  # [B, atk_pro]
+
+    long_tail_tensor = torch.as_tensor(long_tail, device=scores_all.device)
+    is_long_tail = torch.isin(topk_items, long_tail_tensor).float()
+
+    return is_long_tail.sum(dim=1) / atk_pro
+
 def compute_differentiable_ndcg(args, ranks_prov, sampled_ids_batch, labels_batch):
     """
     ranks_prov: [B, num_items] dove B = len(unique_u)
@@ -380,6 +417,27 @@ def train(args, exp_id, val_best):
     history_losses = {'batch_loss': []}
     for t in tasks:
         history_losses[f'loss_{t}'] = []
+    if config.track_surrogates:
+        surrogate_history = {
+            'ndcg': {
+                'approx_mean': [],
+                'true_mean': [],
+                'gap_mean': [],
+                'abs_gap_mean': [],
+                'pearson': [],
+                'spearman': [],
+            },
+            'aplt': {
+                'approx_mean': [],
+                'true_mean': [],
+                'gap_mean': [],
+                'abs_gap_mean': [],
+                'pearson': [],
+                'spearman': [],
+            }
+        }
+    else:
+        surrogate_history = None
 
     validation_scores = []
 
@@ -442,6 +500,12 @@ def train(args, exp_id, val_best):
             # loss['3'] = torch.tensor(0)
             # acc = torch.tensor(0)
             # acc_ndcg = torch.tensor(0)
+            if config.track_surrogates:
+                epoch_ndcg_approx = []
+                epoch_ndcg_true = []
+                epoch_aplt_approx = []
+                epoch_aplt_true = []
+
             print("Epoch:", iter + 1)
             if args.mo_method in ['AMORE_EPO']:
                 n_linscalar_adjusts = 0
@@ -514,6 +578,8 @@ def train(args, exp_id, val_best):
                     if 'm' in args.mode:
                         ndcg = compute_differentiable_ndcg(args, ranks_prov, sampled_ids_batch, labels_batch)
 
+
+
                         if args.mo_method in ['AMORE_MGDA', 'AMORE_EPO', 'AMORE_SCALE']:
                             loss['2'] = normalize_loss(torch.square(1 - ndcg)).sum()
                         elif args.mo_method in ['AMORE_ABL_WOS']:
@@ -566,6 +632,24 @@ def train(args, exp_id, val_best):
                     else:
                         loss['2'] = loss['2'] / len(unique_u)
                         loss['3'] = loss['3'] / len(unique_u)
+
+                    if config.track_surrogates:
+                        with torch.no_grad():
+                            true_ranks = compute_true_ranks(scores_all)
+
+                            if 'm' in args.mode:
+                                ndcg_diff = compute_differentiable_ndcg(args, ranks_prov, sampled_ids_batch, labels_batch)
+                                ndcg_true = compute_true_ndcg(args, true_ranks, sampled_ids_batch, labels_batch)
+
+                                epoch_ndcg_approx.extend(ndcg_diff.detach().cpu().tolist())
+                                epoch_ndcg_true.extend(ndcg_true.detach().cpu().tolist())
+
+                            if 'p' in args.mode:
+                                aplt_diff = compute_differentiable_aplt(ranks_prov, args, long_tail)
+                                aplt_true = compute_true_aplt(scores_all, args.atk_pro, long_tail)
+
+                                epoch_aplt_approx.extend(aplt_diff.detach().cpu().tolist())
+                                epoch_aplt_true.extend(aplt_true.detach().cpu().tolist())
 
                     # if args.mo_method in ['USERADAAMORE']:
 
@@ -740,6 +824,60 @@ def train(args, exp_id, val_best):
             # if args.mo_method == 'AMORE':
             #     print(f"\nAPLT loss:\t{acc / num_batches} (the lower the better, [0,1])")
             #     print(f"Approx nDCG loss:\t{acc_ndcg / num_batches} (the lower the better, [0,1])")
+            if config.track_surrogates:
+                if len(epoch_ndcg_approx) > 0:
+                    # ndcg_approx_mean = float(np.mean(epoch_ndcg_approx))
+                    # ndcg_true_mean = float(np.mean(epoch_ndcg_true))
+
+                    ndcg_approx_arr = np.array(epoch_ndcg_approx)
+                    ndcg_true_arr = np.array(epoch_ndcg_true)
+
+                    ndcg_approx_mean = float(ndcg_approx_arr.mean())
+                    ndcg_true_mean = float(ndcg_true_arr.mean())
+                    ndcg_gap_mean = float((ndcg_approx_arr - ndcg_true_arr).mean())
+                    ndcg_abs_gap_mean = float(np.abs(ndcg_approx_arr - ndcg_true_arr).mean())
+                    ndcg_pearson = pearson_corr(ndcg_approx_arr, ndcg_true_arr)
+                    ndcg_spearman = spearman_corr(ndcg_approx_arr, ndcg_true_arr)
+
+                    surrogate_history['ndcg']['approx_mean'].append(ndcg_approx_mean)
+                    surrogate_history['ndcg']['true_mean'].append(ndcg_true_mean)
+                    surrogate_history['ndcg']['gap_mean'].append(ndcg_gap_mean)
+                    surrogate_history['ndcg']['abs_gap_mean'].append(ndcg_abs_gap_mean)
+                    surrogate_history['ndcg']['pearson'].append(ndcg_pearson)
+                    surrogate_history['ndcg']['spearman'].append(ndcg_spearman)
+
+                if len(epoch_aplt_approx) > 0:
+                    # aplt_approx_mean = float(np.mean(epoch_aplt_approx))
+                    # aplt_true_mean = float(np.mean(epoch_aplt_true))
+
+                    aplt_approx_arr = np.array(epoch_aplt_approx)
+                    aplt_true_arr = np.array(epoch_aplt_true)
+
+                    aplt_approx_mean = float(aplt_approx_arr.mean())
+                    aplt_true_mean = float(aplt_true_arr.mean())
+                    aplt_gap_mean = float((aplt_approx_arr - aplt_true_arr).mean())
+                    aplt_abs_gap_mean = float(np.abs(aplt_approx_arr - aplt_true_arr).mean())
+                    aplt_pearson = pearson_corr(aplt_approx_arr, aplt_true_arr)
+                    aplt_spearman = spearman_corr(aplt_approx_arr, aplt_true_arr)
+
+                    surrogate_history['aplt']['approx_mean'].append(aplt_approx_mean)
+                    surrogate_history['aplt']['true_mean'].append(aplt_true_mean)
+                    surrogate_history['aplt']['gap_mean'].append(aplt_gap_mean)
+                    surrogate_history['aplt']['abs_gap_mean'].append(aplt_abs_gap_mean)
+                    surrogate_history['aplt']['pearson'].append(aplt_pearson)
+                    surrogate_history['aplt']['spearman'].append(aplt_spearman)
+
+                if len(epoch_ndcg_approx) > 0:
+                    print(
+                        f"[Epoch {iter + 1}] nDCG approx={ndcg_approx_mean:.6f} true={ndcg_true_mean:.6f} gap={ndcg_approx_mean - ndcg_true_mean:.6f}")
+                    print(
+                        f"[Epoch {iter + 1}] nDCG corr: pearson={surrogate_history['ndcg']['pearson'][-1]:.4f}, spearman={surrogate_history['ndcg']['spearman'][-1]:.4f}")
+
+                if len(epoch_aplt_approx) > 0:
+                    print(
+                        f"[Epoch {iter + 1}] APLT approx={aplt_approx_mean:.6f} true={aplt_true_mean:.6f} gap={aplt_approx_mean - aplt_true_mean:.6f}")
+                    print(
+                        f"[Epoch {iter + 1}] APLT corr: pearson={surrogate_history['aplt']['pearson'][-1]:.4f}, spearman={surrogate_history['aplt']['spearman'][-1]:.4f}")
             end_epoch = time.time()
             epoch_times.append(end_epoch - start_epoch)
             print('Epoch time: {:.6f}'.format(end_epoch-start_epoch))
@@ -893,6 +1031,12 @@ def train(args, exp_id, val_best):
             os.makedirs(f'results/{args.data}/losses')
         with open(f'results/{args.data}/losses/{exp_id}_loss.pkl', 'wb') as f:
             pickle.dump(history_losses, f)
+        if config.track_surrogates:
+            if not os.path.exists(f'results/{args.data}/surrogate_history'):
+                os.makedirs(f'results/{args.data}/surrogate_history')
+
+            with open(f'results/{args.data}/surrogate_history/{exp_id}_surrogate.pkl', 'wb') as f:
+                pickle.dump(surrogate_history, f)
         # val_columns = ['iter', 'cutoff', 'precision', 'recall', 'ndcg']
         # validation_results = pd.DataFrame(validation_results, columns=val_columns)
         # if not os.path.exists(f'results/{args.data}/performance'):
