@@ -73,6 +73,19 @@ class Namespace:
                 pass
             self.ranker = experiment['ranker']
             self.scale1 = experiment['scale']
+        elif self.mo_method == 'ADA2FAIR':
+            self.weight_lr = experiment['weight_lr']
+            self.weight_epochs = experiment['weight_epochs']
+            self.topk = experiment['topk']
+            self.provider_eta = experiment['provider_eta']
+            self.alpha = experiment['alpha']
+            self.delta = experiment['delta']
+
+            self.encoder_layers = experiment['encoder_layers']
+            self.decoder_layers_pfair = experiment['decoder_layers_pfair']
+            self.decoder_layers_ufair = experiment['decoder_layers_ufair']
+            self.dropout_prob = experiment['dropout_prob']
+            self.encoder_activation = experiment['encoder_activation']
 
 
 

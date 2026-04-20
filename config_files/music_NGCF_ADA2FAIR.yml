@@ -1,0 +1,39 @@
+setting:
+  data: amazon_music
+  gpu_id: 1
+  baseline: NGCF
+  wrapper: ADA2FAIR
+  epochs: 300
+  validation_rate: 10
+  validation_metric: ndcg@20
+  batch_size: 2048
+
+hyperparameters:
+  dim: [64] # Dimension for embedding
+  lr: [0.005, 0.001, 0.0005] # Learning rate
+  l_2: [0.01, 0.005, 0.001] #L2 penalty
+  layers: [3]
+  message_dropout: [0.1]
+  node_dropout: [0.1]
+  normalize: [True]
+
+  mode: [rup]
+
+  weight_lr: [0.001]
+  weight_epochs: [1]
+
+  topk: [20]
+  provider_eta: [1.0]
+  alpha: [0.5]
+  delta: [1.0e-8]
+
+  encoder_layers: [[256, 128]]
+  decoder_layers_pfair: [[128]]
+  decoder_layers_ufair: [[128]]
+  dropout_prob: [0.1]
+  encoder_activation: [relu]
+
+  seed: [42]
+
+
+
