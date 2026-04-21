@@ -1154,8 +1154,8 @@ if __name__ == '__main__':
     val_best = 0
     if config.end is None:
         config.end = len(experiments) + 1
-    for i, experiment in reversed(list(enumerate(experiments, start=1))):
-    # for i, experiment in enumerate(experiments, start=1):
+    # for i, experiment in reversed(list(enumerate(experiments, start=1))):
+    for i, experiment in enumerate(experiments, start=1):
         if config.start <= i <= config.end:
             print(f"Experiment {i}/{len(experiments)}")
             # eventid = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S%f")[:-6]
