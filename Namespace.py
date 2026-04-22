@@ -40,6 +40,15 @@ class Namespace:
             self.message_dropout = experiment['message_dropout']
             self.node_dropout = experiment['node_dropout']
             self.normalize = experiment['normalize']
+        elif self.backbone == 'MixRec':
+            self.dim = experiment['dim']
+            self.lr = experiment['lr']
+            self.weight_decay = experiment['l_2']
+            self.layers = experiment['layers']
+            self.ssl_lambda = experiment['ssl_lambda']
+            self.mix_alpha = experiment['mix_alpha']
+            self.temperature = experiment['temperature']
+            self.patience = experiment['patience']
 
         if self.mo_method == 'AMORE_MGDA':
             self.atk = experiment['atk']

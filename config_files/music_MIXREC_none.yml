@@ -1,0 +1,25 @@
+setting:
+  data: amazon_music # Dataset
+  gpu_id: 1 # GPU_ID
+  baseline: MixRec # Base model
+  wrapper: None # Multi-Objective Method
+  epochs: 500 # Number of epochs
+  validation_rate: 10 # Period of evaluation during training
+  validation_metric: ndcg@20 # Metric of evaluation during training
+  batch_size: 2048 # Batch size
+hyperparameters:
+  dim: [64]
+  lr: [0.005, 0.001]
+  l_2: [0.0001]
+  layers: [3]
+  ssl_lambda: [0.0, 0.01, 0.1, 1]
+  mix_alpha: [0.1]
+  temperature: [0.2]
+  mode: [r]
+  seed: [42]
+  scale: [1]
+  patience: [3]
+
+
+
+
