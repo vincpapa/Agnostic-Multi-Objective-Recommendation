@@ -398,7 +398,7 @@ def train(args, exp_id, val_best):
         rec_optimizer = torch.optim.Adam(model.backbone_parameters(), lr=args.lr)
         weight_optimizer = torch.optim.Adam(model.weight_parameters(), lr=args.weight_lr)
     else:
-        model = backbone
+        model = backbone.to(args.device)
         if args.backbone == 'BPRMF':
             optimizer = torch.optim.Adam(model.myparameters, lr=args.lr)
         else:
