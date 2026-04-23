@@ -629,6 +629,10 @@ def train(args, exp_id, val_best):
                         # scores_all = model.predict(users)
                         batch_users = unique_u.to(args.device)
                         scores_all = model.predict(batch_users)
+                    elif args.backbone == 'MixRec':
+                        # scores_all = model.predict(users)
+                        batch_users = unique_u.to(args.device)
+                        scores_all = model.predict(batch_users)
                     else:
                         raise ValueError("Backbone not supported.")
 
