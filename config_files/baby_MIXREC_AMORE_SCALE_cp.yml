@@ -1,7 +1,7 @@
 setting:
   data: amazon_baby # Dataset
   gpu_id: 1 # GPU_ID
-  baseline: BPRMF # Base model
+  baseline: MixRec # Base model
   wrapper: AMORE_SCALE # Multi-Objective Method
   epochs: 500 # Number of epochs
   validation_rate: 10 # Period of evaluation during training
