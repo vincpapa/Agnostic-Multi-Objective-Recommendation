@@ -267,7 +267,8 @@ def exp_string(i, args):
             'decoder_layers_pfair',
             'decoder_layers_ufair',
             'dropout_prob',
-            'encoder_activation'
+            'encoder_activation',
+            'patience'
         ]
     ).replace('.', '$')
 
