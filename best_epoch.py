@@ -50,7 +50,7 @@ for dataset in datasets:
 
     if method == 'AMORE':
 
-        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*rpms*'):
+        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpm*'):
             with open(file, 'rb') as handle:
                 store_validation = pickle.load(handle)
 
@@ -75,7 +75,7 @@ for dataset in datasets:
 
     if method == 'AMORE':
 
-        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpms*'):
+        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpm*'):
             with open(file, 'rb') as handle:
                 store_validation = pickle.load(handle)
 
@@ -100,7 +100,7 @@ for dataset in datasets:
 
     if method == 'AMORE':
 
-        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpms*'):
+        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpm*'):
             with open(file, 'rb') as handle:
                 store_validation = pickle.load(handle)
 
@@ -125,7 +125,7 @@ for dataset in datasets:
 
     if method == 'AMORE':
 
-        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpms*'):
+        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpm*'):
             with open(file, 'rb') as handle:
                 store_validation = pickle.load(handle)
 
@@ -150,7 +150,7 @@ for dataset in datasets:
 
     if method == 'AMORE':
 
-        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*rpms*'):
+        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpm*'):
             with open(file, 'rb') as handle:
                 store_validation = pickle.load(handle)
 
@@ -175,7 +175,7 @@ for dataset in datasets:
 
     if method == 'AMORE':
 
-        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*rpm_*'):
+        for file in glob.glob(f'results/{dataset}/performance/*{backbone}*AMORE*rpm*'):
             with open(file, 'rb') as handle:
                 store_validation = pickle.load(handle)
 
