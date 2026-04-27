@@ -1,0 +1,39 @@
+setting:
+  data: facebook_books
+  gpu_id: 0
+  baseline: MixRec
+  wrapper: ADA2FAIR
+  epochs: 500
+  validation_rate: 10
+  validation_metric: ndcg@20
+  batch_size: 2048
+
+hyperparameters:
+  dim: [ 64 ]
+  lr: [ 0.005, 0.001 ]
+  l_2: [ 0.0001 ]
+  layers: [ 3 ]
+  ssl_lambda: [ 0.0, 0.01, 0.1, 1 ]
+  mix_alpha: [ 0.1 ]
+  temperature: [ 0.2 ]
+
+  mode: [rup]
+
+  weight_lr: [0.001]
+  weight_epochs: [1]
+
+  topk: [20]
+  provider_eta: [1.0]
+  alpha: [0.5]
+  delta: [1.0e-8]
+
+  encoder_layers: [[256, 128]]
+  decoder_layers_pfair: [[128]]
+  decoder_layers_ufair: [[128]]
+  dropout_prob: [0.1]
+  encoder_activation: [relu]
+
+  seed: [42]
+
+
+
