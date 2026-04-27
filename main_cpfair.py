@@ -89,8 +89,8 @@ def to_mapping(mapping, x):
             return v
 
 
-# dataset_list = ['amazon_baby', 'facebook_books', 'amazon_music']
-dataset_list = ['amazon_boys_girls']
+dataset_list = ['amazon_book', 'amazon_baby', 'amazon_music', 'facebook_books']
+# dataset_list = ['amazon_boys_girls']
 for dataset_name in dataset_list:
     settings = {'data': dataset_name}
     dataset, index_F, index_M, genre_mask, popular_dict, vec_pop, long_tail, short_head, train_aplt, train_user_tail_list = preprocessing(settings)
@@ -112,8 +112,9 @@ for dataset_name in dataset_list:
         U[u][1] = 1
     # U[:, 1] = 1
 
+
     for rec in recs:
-        if dataset_name in rec:  # and 'BPRMF' in rec:
+        if dataset_name in rec and 'MixRec' in rec:
             # df = pd.read_csv(rec, sep='\t', names=['user', 'item', 'rate'])
             # df['user'] = df['user'].map(lambda x: to_mapping(dataset['user_mapping'], x))
             # df['item'] = df['item'].map(lambda x: to_mapping(dataset['item_mapping'], x))
@@ -122,7 +123,7 @@ for dataset_name in dataset_list:
             # Y = df['item'].values
             # S[X, Y] = 1
             loaded = np.load(rec)
-            S = loaded['arr_0']
+            S = loaded['score_matrix']
             P = np.zeros([int(dataset['user_size']), topk])
             # i = 0
             #for j in range(0, P.shape[0]):
@@ -221,6 +222,12 @@ for dataset_name in dataset_list:
                                 if not os.path.exists(f'results/{dataset_name}/best_recs/'):
                                     os.makedirs(f'results/{dataset_name}/best_recs/')
                                 rec_elliot.to_csv(f'results/{dataset_name}/best_recs/NGCF_CPFAIR_{user_eps}_{item_eps}_{dataset_name}.tsv',
+                                                  sep='\t', index=False, header=False)
+
+                            elif 'MixRec' in rec:
+                                if not os.path.exists(f'results/{dataset_name}/best_recs/'):
+                                    os.makedirs(f'results/{dataset_name}/best_recs/')
+                                rec_elliot.to_csv(f'results/{dataset_name}/best_recs/MIXREC_CPFAIR_{user_eps}_{item_eps}_{dataset_name}.tsv',
                                                   sep='\t', index=False, header=False)
 
                             elif 'LightGCN' in rec:
