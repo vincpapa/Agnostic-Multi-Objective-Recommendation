@@ -1,6 +1,6 @@
 setting:
   data: amazon_baby
-  gpu_id: 0
+  gpu_id: 1
   baseline: MixRec
   wrapper: ADA2FAIR
   epochs: 500
