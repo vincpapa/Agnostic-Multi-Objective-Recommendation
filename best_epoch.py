@@ -5,7 +5,7 @@ import os
 
 
 datasets = ['amazon_baby', 'amazon_music', 'facebook_books']
-backbone = 'BPRMF'
+backbone = 'MixRec'
 method = 'AMORE'
 for dataset in datasets:
     if method == 'None':
