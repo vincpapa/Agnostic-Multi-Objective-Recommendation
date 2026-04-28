@@ -745,6 +745,8 @@ def train(args, exp_id, val_best):
                             scores_all = model.predict(users)
                         elif args.backbone == 'NGCF':
                             scores_all = model.predict(users)
+                        elif args.backbone == 'MixRec':
+                            scores_all = model.predict(users)
                         # scores_all[:,item_size] = -np.inf
                         scores = torch.gather(scores_all, 1, sampled_ids).to(args.device)
 
