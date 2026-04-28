@@ -30,6 +30,7 @@ hyperparameters:
   encoder_activation: [relu]
 
   seed: [42]
+  patience: [3]
 
 
 
