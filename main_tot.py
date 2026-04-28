@@ -371,9 +371,11 @@ def train(args, exp_id, val_best):
 
     print("Pre sampling time:{}".format(time.time() - t1))
 
-    gender_label = np.zeros(len(index_F) + len(index_M))
-    for ind in index_F:
-        gender_label[ind] = 1
+    # gender_label = np.zeros(len(index_F) + len(index_M))
+    # for ind in index_F:
+    #     gender_label[ind] = 1
+    gender_label = torch.zeros(len(index_F) + len(index_M), device=args.device)
+    gender_label[index_F] = 1.0
 
     if args.backbone == 'BPRMF':
         backbone = MatrixFactorization(user_size, item_size, args)
@@ -755,13 +757,19 @@ def train(args, exp_id, val_best):
                         # ndcg = -torch.log(ndcg)
                         # print("ndcg:", -torch.log(ndcg))
                         # loss['1'] = (1 - ndcg[:,9]).sum()
-                        mask_F = gender_label[unique_u]
-                        mask_M = 1 - mask_F
+                        # mask_F = gender_label[unique_u]
+                        # mask_M = 1 - mask_F
 
-                        mask_F = torch.from_numpy(mask_F).type(torch.FloatTensor).to(args.device)
-                        mask_M = torch.from_numpy(mask_M).type(torch.FloatTensor).to(args.device)
-                        pos_F = torch.tensor(np.where(mask_F.cpu() == 1)[0]).to(args.device)
-                        pos_M = torch.tensor(np.where(mask_M.cpu() == 1)[0]).to(args.device)
+                        # mask_F = torch.from_numpy(mask_F).type(torch.FloatTensor).to(args.device)
+                        # mask_M = torch.from_numpy(mask_M).type(torch.FloatTensor).to(args.device)
+                        # pos_F = torch.tensor(np.where(mask_F.cpu() == 1)[0]).to(args.device)
+                        # pos_M = torch.tensor(np.where(mask_M.cpu() == 1)[0]).to(args.device)
+
+                        mask_F = gender_label[unique_u].float()
+                        mask_M = 1.0 - mask_F
+
+                        pos_F = torch.where(mask_F == 1)[0]
+                        pos_M = torch.where(mask_M == 1)[0]
 
                         ndcg_F = ndcg[pos_F]
                         ndcg_M = ndcg[pos_M]
