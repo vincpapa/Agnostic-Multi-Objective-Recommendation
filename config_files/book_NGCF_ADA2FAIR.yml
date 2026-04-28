@@ -1,6 +1,6 @@
 setting:
   data: amazon_book
-  gpu_id: 1
+  gpu_id: 0
   baseline: NGCF
   wrapper: ADA2FAIR
   epochs: 500
