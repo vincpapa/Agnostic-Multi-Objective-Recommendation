@@ -5,7 +5,7 @@ import os
 
 
 datasets = ['amazon_book']
-backbone = 'NGCF'
+backbone = 'MixRec'
 method = 'AMORE'
 for dataset in datasets:
     if method == 'None':
