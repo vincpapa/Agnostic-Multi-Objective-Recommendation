@@ -4,8 +4,8 @@ import shutil
 import os
 
 
-datasets = ['amazon_baby', 'amazon_music', 'facebook_books']
-backbone = 'MixRec'
+datasets = ['amazon_book']
+backbone = 'BPRMF'
 method = 'AMORE'
 for dataset in datasets:
     if method == 'None':

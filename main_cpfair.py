@@ -89,7 +89,7 @@ def to_mapping(mapping, x):
             return v
 
 
-dataset_list = ['amazon_book', 'amazon_baby', 'amazon_music', 'facebook_books']
+dataset_list = ['amazon_book'] # , 'amazon_baby', 'amazon_music', 'facebook_books']
 # dataset_list = ['amazon_boys_girls']
 for dataset_name in dataset_list:
     settings = {'data': dataset_name}
@@ -114,7 +114,7 @@ for dataset_name in dataset_list:
 
 
     for rec in recs:
-        if dataset_name in rec and 'MixRec' in rec:
+        if dataset_name in rec and 'BPRMF' in rec:
             # df = pd.read_csv(rec, sep='\t', names=['user', 'item', 'rate'])
             # df['user'] = df['user'].map(lambda x: to_mapping(dataset['user_mapping'], x))
             # df['item'] = df['item'].map(lambda x: to_mapping(dataset['item_mapping'], x))
