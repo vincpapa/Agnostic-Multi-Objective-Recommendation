@@ -11,7 +11,7 @@ hyperparameters:
   dim: [ 64 ] # Dimension for embedding
   lr: [ 0.005, 0.001, 0.0005 ] # Learning rate
   l_2: [ 0.01, 0.005, 0.001 ] #L2 penalty
-  mode: [ rpm ] # Which loss to use
+  mode: [ rp ] # Which loss to use
   atk: [ { atk_cons: 20, atk_prov: 20 } ] # Cutoff when computing approximated metrics
   ranker: [ AIMLE ]
   scale: [ 0.25, 0.5, 0.75, 0.95 ] # [0.25, 0.5, 0.75, 0.9]
