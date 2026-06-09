@@ -4,7 +4,7 @@ import shutil
 import os
 
 
-datasets = ['amazon_book'] # ['amazon_music'] # ['amazon_baby', 'facebook_books']
+datasets = ['facebook_books'] # ['amazon_music'] # ['amazon_baby', 'facebook_books']
 backbones = ['BPRMF'] # ['BPRMF','NGCF']
 method = 'AMORE_SCALE'
 scales = ['0$25', '0$5', '0$75', '0$95'] # ['0$25', '0$3', '0$4', '0$5', '0$6', '0$7', '0$75']
@@ -12,7 +12,7 @@ for dataset in datasets:
     for backbone in backbones:
         for scale in scales:
             if method == 'AMORE_SCALE':
-                for file in glob.glob(f'results/{dataset}/performance/*{backbone}*rd*'):
+                for file in glob.glob(f'results/{dataset}/performance/*{backbone}*rmd*'):
                     with open(file, 'rb') as handle:
                         store_validation = pickle.load(handle)
                     for k, v in list(store_validation.items()):
