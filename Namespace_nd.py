@@ -84,10 +84,21 @@ class NamespaceND:
                 self.atk_nov = experiment['atk']['atk_nov']
             except KeyError:
                 pass
+            try:
+                self.atk_ent = experiment['atk']['atk_ent']
+            except KeyError:
+                pass
 
             self.ranker = experiment['ranker']
             self.scale1 = experiment['scale']
-            self.item_feature_path = experiment['item_feature_path']
+            try:
+                self.item_feature_path = experiment['item_feature_path']
+            except KeyError:
+                pass
+            try:
+                self.entropy_mask_train = experiment['entropy_mask_train']
+            except KeyError:
+                pass
         elif self.mo_method == 'ADA2FAIR':
             self.weight_lr = experiment['weight_lr']
             self.weight_epochs = experiment['weight_epochs']
