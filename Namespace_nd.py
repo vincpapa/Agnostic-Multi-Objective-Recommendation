@@ -77,7 +77,7 @@ class NamespaceND:
             except KeyError:
                 pass
             try:
-                self.atk_nov = experiment['atk']['atk_con']
+                self.atk_con = experiment['atk']['atk_con']
             except KeyError:
                 pass
             try:
