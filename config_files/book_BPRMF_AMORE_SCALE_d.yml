@@ -14,7 +14,7 @@ hyperparameters:
   mode: [ rmd ] # Which loss to use
   atk: [ { atk_div: 20, atk_con: 20 } ] # Cutoff when computing approximated metrics
   ranker: [ AIMLE ]
-  scale: [ 0.25, 0.5, 0.75, 0.95 ] # [0.25, 0.5, 0.75, 0.9]
+  scale: [ 0.75, 0.95 ] # [0.25, 0.5, 0.75, 0.9]
   item_feature_path: [ 'arrays/amazon_book/BPRMF_None_9-backbone=BPRMF-mo_method=None-mode=r-data=amazon_book-seed=42-dim=64-lr=0$0005-weight_decay=0$001-scale1=1.npz']
 
 
