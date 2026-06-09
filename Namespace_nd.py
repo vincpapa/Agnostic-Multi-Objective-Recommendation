@@ -80,6 +80,10 @@ class NamespaceND:
                 self.atk_nov = experiment['atk']['atk_nov']
             except KeyError:
                 pass
+            try:
+                self.atk_nov = experiment['atk']['atk_con']
+            except KeyError:
+                pass
             self.ranker = experiment['ranker']
             self.scale1 = experiment['scale']
             self.item_feature_path = experiment['item_feature_path']
