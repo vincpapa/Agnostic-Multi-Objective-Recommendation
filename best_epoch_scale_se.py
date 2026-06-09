@@ -4,10 +4,10 @@ import shutil
 import os
 
 
-datasets = ['facebook_books', 'amazon_book'] # ['amazon_music'] # ['amazon_baby', 'facebook_books']
+datasets = ['amazon_baby'] # ['amazon_music'] # ['amazon_baby', 'facebook_books']
 backbones = ['BPRMF'] # ['BPRMF','NGCF']
 method = 'AMORE_SCALE'
-scales = ['0$25', '0$5'] # ['0$25', '0$3', '0$4', '0$5', '0$6', '0$7', '0$75']
+scales = ['0$25', '0$5', '0$75', '0$95'] # ['0$25', '0$3', '0$4', '0$5', '0$6', '0$7', '0$75']
 for dataset in datasets:
     for backbone in backbones:
         for scale in scales:
