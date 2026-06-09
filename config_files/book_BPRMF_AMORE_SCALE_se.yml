@@ -1,6 +1,6 @@
 setting:
   data: amazon_book # Dataset
-  gpu_id: 3 # GPU_ID
+  gpu_id: 1 # GPU_ID
   baseline: BPRMF # Base model
   wrapper: AMORE_SCALE # Multi-Objective Method
   epochs: 500 # Number of epochs
@@ -14,7 +14,7 @@ hyperparameters:
   mode: [ rme ] # Which loss to use
   atk: [ { atk_ent: 20, atk_con: 20 } ] # Cutoff when computing approximated metrics
   ranker: [ AIMLE ]
-  scale: [ 0.95, 0.75 ] # [0.25, 0.5, 0.75, 0.9]
+  scale: [ 0.95 ] # [0.25, 0.5, 0.75, 0.9]
   entropy_mask_train: [True]
 
 
