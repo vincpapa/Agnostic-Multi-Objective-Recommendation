@@ -11,10 +11,10 @@ hyperparameters:
   dim: [ 64 ] # Dimension for embedding
   lr: [ 0.005, 0.001] # Learning rate
   l_2: [ 0.01, 0.005] #L2 penalty
-  mode: [ re ] # Which loss to use
+  mode: [ rme ] # Which loss to use
   atk: [ { atk_ent: 20, atk_con: 20 } ] # Cutoff when computing approximated metrics
   ranker: [ AIMLE ]
-  scale: [ 0.95, 0.75 ] # [0.25, 0.5, 0.75, 0.9]
+  scale: [ 0.5, 0.25 ] # [0.25, 0.5, 0.75, 0.9]
   entropy_mask_train: [ True ]
 
 
