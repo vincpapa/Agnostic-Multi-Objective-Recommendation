@@ -4,7 +4,7 @@ import shutil
 import os
 
 
-datasets = ['amazon_music']
+datasets = ['amazon_book']
 backbone = 'BPRMF'
 method = 'AMORE'
 for dataset in datasets:
