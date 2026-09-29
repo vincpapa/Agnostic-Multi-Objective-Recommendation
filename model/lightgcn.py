@@ -17,7 +17,7 @@ class LightGCNModel(torch.nn.Module, ABC):
                  **kwargs
                  ):
         super().__init__()
-        random_seed = 42
+        random_seed = args.seed
         random.seed(random_seed)
         np.random.seed(random_seed)
         torch.manual_seed(random_seed)
@@ -96,11 +96,14 @@ class LightGCNModel(torch.nn.Module, ABC):
         return xui
 
     def predict(self, user_id):
-        gu, gi = self.propagate_embeddings(evaluate=True)
+        # No torch.no_grad() here: AMORe/MultiFR backpropagate through these scores.
+        # Evaluation code already wraps predict() in torch.no_grad().
+        gu, gi = self.propagate_embeddings()
         # user_id = Variable(torch.from_numpy(user_id).long(), requires_grad=False).to(self.device)
         # user_emb = self.Gu(user_id)
         # pred = user_emb.mm(self.Gi.weight.t())
-        pred = torch.sigmoid(torch.matmul(gu[user_id].to(self.device), torch.transpose(gi.to(self.device), 0, 1)))
+        # Raw dot-product scores, as in the other backbones (no sigmoid)
+        pred = torch.matmul(gu[user_id].to(self.device), torch.transpose(gi.to(self.device), 0, 1))
 
         return pred
 
